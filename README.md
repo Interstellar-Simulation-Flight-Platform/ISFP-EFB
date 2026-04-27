@@ -57,12 +57,6 @@ npm run build
         └── UtcClock.vue
 ```
 
-## API 数据来源
-
-- 航路：`route.hkrscoc.com`
-- METAR / 在线状态：`isfpapi.flyisfp.com`
-- TAF：`aviationweather.gov`
-
 ## 主站
 
 [www.flyisfp.com](https://www.flyisfp.com)
