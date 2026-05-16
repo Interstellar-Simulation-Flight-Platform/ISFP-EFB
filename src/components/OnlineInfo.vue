@@ -172,8 +172,8 @@ const formattedTime = computed(() => {
 })
 
 const FACILITY_NAMES = {
-  1: '放行', 2: '地面', 3: '塔台', 4: '进近',
-  5: '区调', 6: '区调', 7: '机坪',
+  0: 'OBS', 1: '飞服', 2: '放行', 3: '地面',
+  4: '塔台', 5: '进近', 6: '区域',
 }
 
 function getFacilityName(id) {
