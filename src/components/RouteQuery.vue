@@ -18,15 +18,13 @@
         <div class="route-line">
           <div class="dot dep-dot"></div>
           <div class="line-body">
-            <div class="plane-icon" :class="{ flying: loading }">✈️</div>
+            <span class="plane-icon" :class="{ flying: loading }"><Icon name="plane" :size="18" /></span>
           </div>
           <div class="dot arr-dot"></div>
         </div>
         <button class="search-btn" @click="search" :disabled="loading">
-          <span v-if="!loading">查询航路</span>
-          <span v-else class="loading-text">
-            <span class="spinner"></span> 查询中...
-          </span>
+          <span v-if="!loading" class="btn-inner"><Icon name="search" :size="16" /> 查询航路</span>
+          <span v-else class="loading-text"><span class="spinner"></span> 查询中...</span>
         </button>
       </div>
 
@@ -43,18 +41,18 @@
       </div>
     </div>
 
-    <div v-if="error" class="error-box">{{ error }}</div>
+    <div v-if="error" class="error-box"><Icon name="alert" :size="16" /> {{ error }}</div>
 
     <div v-if="result" class="result-panel">
       <div class="result-header">
         <div class="result-route-label">
           <span class="result-icao">{{ result.dep }}</span>
-          <span class="result-arrow">→</span>
+          <span class="result-arrow"><Icon name="arrowRight" :size="18" /></span>
           <span class="result-icao">{{ result.arr }}</span>
         </div>
         <div class="result-header-actions">
-          <button class="copy-btn" @click="copyAirway(result.airway)">📋 复制</button>
-          <a href="https://www.flyisfp.com/flight-plan" target="_blank" class="flight-plan-btn">📝 提交飞行计划</a>
+          <button class="copy-btn" @click="copyAirway(result.airwayHandIn)"><Icon name="copy" :size="15" /> {{ copied ? '已复制' : '复制' }}</button>
+          <a href="https://www.flyisfp.com/flight-plan" target="_blank" rel="noopener noreferrer" class="flight-plan-btn"><Icon name="doc" :size="15" /> 提交飞行计划</a>
         </div>
       </div>
 
@@ -71,9 +69,8 @@
     </div>
 
     <div v-if="!result && !loading && !error" class="empty-state">
-      <img src="/logo/logo.png" alt="" class="empty-logo" @error="e => e.target.style.display='none'" />
+      <span class="empty-logo"><Icon name="route" :size="48" /></span>
       <p>请输入起降机场 ICAO 代码查询航路</p>
-      <p class="empty-example">例如：ZBAA → ZSPD</p>
     </div>
   </div>
 </template>
@@ -81,6 +78,7 @@
 <script setup>
 import { ref } from 'vue'
 import { fetchRoute } from '../api/index.js'
+import Icon from './Icon.vue'
 
 const dep = ref('')
 const arr = ref('')
@@ -88,6 +86,7 @@ const loading = ref(false)
 const error = ref('')
 const result = ref(null)
 const depInput = ref(null)
+const copied = ref(false)
 
 async function search() {
   error.value = ''
@@ -122,349 +121,121 @@ async function search() {
 }
 
 function copyAirway(text) {
-  navigator.clipboard.writeText(text).catch(() => {})
+  navigator.clipboard.writeText(text).then(() => {
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 1500)
+  }).catch(() => {})
 }
 </script>
 
 <style scoped>
-.route-wrapper {
-  max-width: 960px;
-  margin: 0 auto;
-}
+.route-wrapper { max-width: 980px; margin: 0 auto; }
 
 .search-panel {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  background: var(--bg-surface);
+  display: flex; align-items: center; gap: 0;
+  background: var(--glass);
+  backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 24px;
+  border-radius: 18px; padding: 28px 24px;
+  box-shadow: var(--shadow);
 }
-
-.airport-box {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.airport-label {
-  font-size: 12px;
-  color: var(--text-dim);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+.airport-box { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.airport-label { font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
 .icao-input {
-  width: 130px;
-  padding: 14px 0;
-  border: none;
-  background: var(--bg-input);
-  color: var(--text-accent);
-  font-size: 28px;
-  font-weight: 700;
+  width: 130px; padding: 14px 0; border: none;
+  background: var(--glass-input); color: var(--text-accent);
+  font-size: 28px; font-weight: 700;
   font-family: 'Consolas', 'Courier New', monospace;
-  letter-spacing: 8px;
-  text-align: center;
-  border-radius: 10px;
-  outline: none;
-  transition: all 0.2s;
-  text-transform: uppercase;
+  letter-spacing: 8px; text-align: center; border-radius: 12px;
+  outline: none; transition: all 0.2s; text-transform: uppercase;
   border: 2px solid transparent;
 }
+.icao-input:focus { border-color: var(--text-accent); box-shadow: 0 0 24px rgba(111, 181, 255, 0.18); }
 
-.icao-input:focus {
-  border-color: var(--text-accent);
-  box-shadow: 0 0 20px rgba(126, 200, 255, 0.15);
-}
-
-.route-visual {
-  flex: 0 0 220px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 0 12px;
-}
-
-.route-line {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  gap: 0;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.dep-dot {
-  background: var(--accent);
-  box-shadow: 0 0 8px rgba(32, 128, 232, 0.5);
-}
-
-.arr-dot {
-  background: var(--green);
-  box-shadow: 0 0 8px rgba(74, 173, 94, 0.5);
-}
-
-.line-body {
-  flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg, var(--accent), var(--green));
-  position: relative;
-  margin: 0 4px;
-}
-
-.plane-icon {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 18px;
-  transition: all 0.3s;
-}
-
-.plane-icon.flying {
-  animation: flyBounce 0.6s ease-in-out infinite;
-}
-
+.route-visual { flex: 0 0 220px; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 0 12px; }
+.route-line { display: flex; align-items: center; width: 100%; gap: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dep-dot { background: var(--accent); box-shadow: 0 0 10px rgba(58, 144, 240, 0.6); }
+.arr-dot { background: var(--green); box-shadow: 0 0 10px rgba(78, 197, 116, 0.6); }
+.line-body { flex: 1; height: 2px; background: linear-gradient(90deg, var(--accent), var(--green)); position: relative; margin: 0 4px; }
+.plane-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--text-accent); transition: all 0.3s; display: flex; }
+.plane-icon.flying { animation: flyBounce 0.6s ease-in-out infinite; }
 @keyframes flyBounce {
   0%, 100% { transform: translate(-50%, -50%) translateY(0); }
   50% { transform: translate(-50%, -50%) translateY(-6px); }
 }
 
 .search-btn {
-  padding: 10px 28px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  white-space: nowrap;
-  width: 100%;
+  padding: 11px 28px; background: var(--accent-grad); color: #fff;
+  border: none; border-radius: 11px; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; font-family: inherit;
+  white-space: nowrap; width: 100%;
 }
-
-.search-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(32, 128, 232, 0.3);
-}
-
-.search-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.loading-text {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+.search-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(58, 144, 240, 0.35); }
+.search-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.btn-inner { display: inline-flex; align-items: center; gap: 7px; justify-content: center; }
+.loading-text { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .error-box {
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  color: var(--red);
-  padding: 14px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  margin-top: 16px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--red-bg); border: 1px solid var(--red-border);
+  color: var(--red); padding: 14px 18px; border-radius: 12px;
+  font-size: 14px; margin-top: 16px;
 }
 
 .result-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  overflow: hidden;
-  margin-top: 16px;
+  background: var(--glass);
+  backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--border); border-radius: 16px;
+  overflow: hidden; margin-top: 16px; box-shadow: var(--shadow);
 }
-
-.result-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-code);
-}
-
-.result-route-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.result-icao {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-accent);
-  font-family: 'Consolas', 'Courier New', monospace;
-  letter-spacing: 3px;
-}
-
-.result-arrow {
-  font-size: 18px;
-  color: var(--text-dim);
-}
-
-.result-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.result-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--glass-code); }
+.result-route-label { display: flex; align-items: center; gap: 12px; }
+.result-icao { font-size: 18px; font-weight: 700; color: var(--text-accent); font-family: 'Consolas', 'Courier New', monospace; letter-spacing: 3px; }
+.result-arrow { color: var(--text-dim); display: flex; }
+.result-header-actions { display: flex; align-items: center; gap: 8px; }
 
 .copy-btn {
-  padding: 6px 16px;
-  background: var(--active-bg);
-  color: var(--text-accent);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; background: var(--active-bg); color: var(--text-accent);
+  border: 1px solid var(--border); border-radius: 9px;
+  font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: inherit;
 }
-
-.copy-btn:hover {
-  background: var(--toggle-hover);
-}
+.copy-btn:hover { background: var(--toggle-hover); border-color: var(--border-strong); }
 
 .flight-plan-btn {
-  padding: 6px 16px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  font-family: inherit;
-  font-weight: 500;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; background: var(--accent-grad); color: #fff;
+  border: none; border-radius: 9px; font-size: 13px; cursor: pointer;
+  transition: all 0.2s; text-decoration: none; font-family: inherit; font-weight: 500;
 }
+.flight-plan-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(58, 144, 240, 0.35); }
 
-.flight-plan-btn:hover {
-  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(32, 128, 232, 0.3);
-}
-
-.result-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0;
-}
-
-.result-col {
-  padding: 20px 24px;
-}
-
-.result-col:first-child {
-  border-right: 1px solid var(--border);
-}
-
-.section-title {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-bottom: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+.result-col { padding: 20px 24px; }
+.result-col:first-child { border-right: 1px solid var(--border); }
+.section-title { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
 .route-code {
-  background: var(--bg-input);
-  padding: 14px 18px;
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.8;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: 'Consolas', 'Courier New', monospace;
-  border: 1px solid var(--border-light);
+  background: var(--glass-input); padding: 14px 18px; border-radius: 10px;
+  font-size: 13px; line-height: 1.8; color: var(--text);
+  white-space: pre-wrap; word-break: break-all;
+  font-family: 'Consolas', 'Courier New', monospace; border: 1px solid var(--border-light);
 }
+.route-code.highlight { color: var(--green); border-color: var(--green-border); background: var(--green-soft); }
 
-.route-code.highlight {
-  color: var(--green);
-  border: 1px solid rgba(74, 173, 94, 0.2);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 0 40px;
-  color: var(--text-muted);
-  opacity: 0.7;
-}
-
-.empty-logo {
-  width: 64px;
-  height: 64px;
-  opacity: 0.3;
-  margin-bottom: 16px;
-}
-
-.empty-state p {
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-
-.empty-example {
-  font-size: 13px;
-  color: var(--text-muted);
-  font-family: 'Consolas', 'Courier New', monospace;
-}
+.empty-state { text-align: center; padding: 60px 0 40px; color: var(--text-muted); }
+.empty-logo { display: inline-flex; color: var(--text-muted); opacity: 0.35; margin-bottom: 16px; }
+.empty-state p { font-size: 14px; margin-bottom: 6px; }
 
 @media (max-width: 700px) {
-  .search-panel {
-    flex-direction: column;
-    gap: 20px;
-    padding: 24px 20px;
-  }
-
-  .route-visual {
-    flex: 0 0 auto;
-    width: 100%;
-  }
-
-  .result-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .result-col:first-child {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .icao-input {
-    width: 100%;
-    font-size: 24px;
-    letter-spacing: 6px;
-  }
+  .search-panel { flex-direction: column; gap: 20px; padding: 24px 20px; }
+  .route-visual { flex: 0 0 auto; width: 100%; }
+  .result-grid { grid-template-columns: 1fr; }
+  .result-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  .icao-input { width: 100%; font-size: 24px; letter-spacing: 6px; }
 }
 </style>

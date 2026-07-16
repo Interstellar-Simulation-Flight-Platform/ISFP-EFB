@@ -1,39 +1,29 @@
 <template>
   <div class="feature-card">
-    <div class="card-header">
-      <h2>🌤️ 气象报文查询</h2>
-      <p>查询机场METAR实况报文和TAF预报报文</p>
-    </div>
-
     <div class="tab-row">
-      <button
-        :class="['tab-btn', { active: queryType === 'metar' }]"
-        @click="queryType = 'metar'"
-      >METAR 实况</button>
-      <button
-        :class="['tab-btn', { active: queryType === 'taf' }]"
-        @click="queryType = 'taf'"
-      >TAF 预报</button>
+      <button :class="['tab-btn', { active: queryType === 'metar' }]" @click="queryType = 'metar'">METAR 实况</button>
+      <button :class="['tab-btn', { active: queryType === 'taf' }]" @click="queryType = 'taf'">TAF 预报</button>
     </div>
 
     <div class="input-row">
       <div class="input-group">
-        <label>机场ICAO代码</label>
+        <label>机场 ICAO 代码<span v-if="queryType === 'taf'" class="hint">（TAF 支持批量，逗号分隔）</span></label>
         <input
           v-model="icao"
           type="text"
-          maxlength="4"
-          :placeholder="queryType === 'taf' ? '例如: ZBAA' : '例如: ZBAA'"
+          maxlength="40"
+          :placeholder="queryType === 'taf' ? '例如: ZBAA,ZSPD' : '例如: ZBAA'"
           class="input-field"
           @keyup.enter="search"
         />
       </div>
       <button class="search-btn" @click="search" :disabled="loading">
-        {{ loading ? '查询中...' : `查询${queryType === 'metar' ? 'METAR' : 'TAF'}` }}
+        <span v-if="!loading" class="btn-inner"><Icon name="search" :size="16" /> 查询{{ queryType === 'metar' ? 'METAR' : 'TAF' }}</span>
+        <span v-else class="loading-text"><span class="spinner"></span> 查询中...</span>
       </button>
     </div>
 
-    <div v-if="error" class="error-box">{{ error }}</div>
+    <div v-if="error" class="error-box"><Icon name="alert" :size="16" /> {{ error }}</div>
 
     <div v-if="metarResult && queryType === 'metar'" class="result-box">
       <div class="result-header">
@@ -53,13 +43,14 @@
         </div>
         <div class="result-body">
           <pre v-if="item.taf" class="weather-text">{{ item.taf }}</pre>
-          <p v-else class="no-data">未找到该机场的TAF数据</p>
+          <p v-else class="no-data">未找到该机场的 TAF 数据</p>
         </div>
       </div>
     </div>
 
     <div v-if="!metarResult && tafResults.length === 0 && !loading && !error" class="empty-hint">
-      <p>请输入机场ICAO代码查询气象报文</p>
+      <span class="empty-icon"><Icon name="weather" :size="40" /></span>
+      <p>请输入机场 ICAO 代码查询气象报文</p>
     </div>
   </div>
 </template>
@@ -67,6 +58,7 @@
 <script setup>
 import { ref } from 'vue'
 import { fetchMetar, fetchTaf } from '../api/index.js'
+import Icon from './Icon.vue'
 
 const queryType = ref('metar')
 const icao = ref('')
@@ -138,216 +130,65 @@ async function search() {
 
 <style scoped>
 .feature-card {
-  background: var(--bg-surface);
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  padding: 32px;
+  background: var(--glass);
+  backdrop-filter: blur(var(--blur)); -webkit-backdrop-filter: blur(var(--blur));
+  border-radius: 18px; border: 1px solid var(--border);
+  padding: 30px; box-shadow: var(--shadow);
 }
 
-.card-header {
-  margin-bottom: 24px;
-}
-
-.card-header h2 {
-  font-size: 22px;
-  color: var(--text-accent);
-  margin-bottom: 6px;
-}
-
-.card-header p {
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
-.tab-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
+.tab-row { display: flex; gap: 8px; margin-bottom: 20px; }
 .tab-btn {
-  padding: 10px 24px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  padding: 10px 22px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--glass-input); color: var(--text-dim); font-size: 14px;
+  cursor: pointer; transition: all 0.2s; font-family: inherit;
 }
+.tab-btn:hover { border-color: var(--text-accent); color: var(--text); }
+.tab-btn.active { background: var(--active-bg); border-color: var(--text-accent); color: var(--text-accent); }
 
-.tab-btn:hover {
-  border-color: var(--text-accent);
-  color: var(--text);
-}
-
-.tab-btn.active {
-  background: var(--active-bg);
-  border-color: var(--text-accent);
-  color: var(--text-accent);
-}
-
-.input-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.input-group label {
-  font-size: 13px;
-  color: var(--text-dim);
-  font-weight: 500;
-}
+.input-row { display: flex; align-items: flex-end; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+.input-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; }
+.input-group label { font-size: 13px; color: var(--text-dim); font-weight: 500; }
+.hint { font-size: 11px; color: var(--text-muted); margin-left: 4px; }
 
 .input-field {
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-input);
-  color: var(--text);
-  font-size: 18px;
-  font-family: 'Consolas', 'Courier New', monospace;
-  letter-spacing: 3px;
-  width: 100%;
-  outline: none;
-  transition: border-color 0.2s;
-  text-transform: uppercase;
+  padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--glass-input); color: var(--text); font-size: 18px;
+  font-family: 'Consolas', 'Courier New', monospace; letter-spacing: 3px;
+  width: 100%; outline: none; transition: border-color 0.2s; text-transform: uppercase;
 }
-
-.input-field:focus {
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 3px rgba(126, 200, 255, 0.1);
-}
+.input-field:focus { border-color: var(--text-accent); box-shadow: 0 0 0 3px rgba(111, 181, 255, 0.14); }
 
 .search-btn {
-  padding: 12px 28px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  white-space: nowrap;
+  padding: 12px 26px; background: var(--accent-grad); color: #fff;
+  border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; font-family: inherit; white-space: nowrap;
 }
+.search-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(58, 144, 240, 0.35); }
+.search-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-inner { display: inline-flex; align-items: center; gap: 7px; justify-content: center; }
+.loading-text { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.search-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-}
+.error-box { display: flex; align-items: center; gap: 8px; background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); padding: 14px 18px; border-radius: 10px; font-size: 14px; }
 
-.search-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.result-box { background: var(--glass-input); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.result-header { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--glass-code); }
+.badge { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+.metar-badge { background: var(--accent-grad); }
+.taf-badge { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+.route-desc { font-size: 16px; color: var(--text-accent); font-weight: 600; font-family: 'Consolas', 'Courier New', monospace; letter-spacing: 2px; }
+.result-body { padding: 18px 20px; }
+.weather-text { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; word-break: break-all; font-family: 'Consolas', 'Courier New', monospace; background: var(--glass-code); padding: 16px 18px; border-radius: 8px; }
+.taf-item + .taf-item { border-top: 1px solid var(--border); }
+.no-data { color: var(--text-dim); font-size: 14px; text-align: center; padding: 16px 0; }
 
-.error-box {
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  color: var(--red);
-  padding: 14px 18px;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.result-box {
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.result-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-code);
-}
-
-.badge {
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.metar-badge {
-  background: var(--accent);
-}
-
-.taf-badge {
-  background: #9b59b6;
-}
-
-.route-desc {
-  font-size: 16px;
-  color: var(--text-accent);
-  font-weight: 600;
-  font-family: 'Consolas', 'Courier New', monospace;
-  letter-spacing: 2px;
-}
-
-.result-body {
-  padding: 20px;
-}
-
-.weather-text {
-  font-size: 14px;
-  line-height: 1.8;
-  color: var(--text);
-  white-space: pre-wrap;
-  word-break: break-all;
-  font-family: 'Consolas', 'Courier New', monospace;
-  background: var(--bg-code);
-  padding: 16px 20px;
-  border-radius: 6px;
-}
-
-.taf-item + .taf-item {
-  border-top: 1px solid var(--border);
-}
-
-.no-data {
-  color: var(--text-dim);
-  font-size: 14px;
-  text-align: center;
-  padding: 16px 0;
-}
-
-.empty-hint {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--text-muted);
-  font-size: 14px;
-}
+.empty-hint { text-align: center; padding: 40px 0; color: var(--text-muted); font-size: 14px; }
+.empty-icon { display: inline-flex; color: var(--text-muted); opacity: 0.35; margin-bottom: 10px; }
 
 @media (max-width: 600px) {
-  .feature-card {
-    padding: 20px;
-  }
-
-  .input-field {
-    font-size: 16px;
-    letter-spacing: 2px;
-  }
-
-  .search-btn {
-    width: 100%;
-  }
+  .feature-card { padding: 20px; }
+  .input-field { font-size: 16px; letter-spacing: 2px; }
+  .search-btn { width: 100%; }
 }
 </style>
