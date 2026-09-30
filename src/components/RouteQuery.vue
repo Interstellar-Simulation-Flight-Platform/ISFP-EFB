@@ -52,7 +52,7 @@
         </div>
         <div class="result-header-actions">
           <button class="copy-btn" @click="copyAirway(result.airwayHandIn)"><Icon name="copy" :size="15" /> {{ copied ? '已复制' : '复制' }}</button>
-          <a href="https://www.flyisfp.com/flight-plan" target="_blank" rel="noopener noreferrer" class="flight-plan-btn"><Icon name="doc" :size="15" /> 提交飞行计划</a>
+          <a :href="flightPlanUrl" target="_blank" rel="noopener noreferrer" class="flight-plan-btn"><Icon name="doc" :size="15" /> 提交飞行计划</a>
         </div>
       </div>
 
@@ -66,6 +66,22 @@
           <div class="route-code highlight">{{ result.airwayHandIn }}</div>
         </div>
       </div>
+
+      <div v-if="metars.length > 0" class="metar-section">
+        <h4 class="section-title">机场 METAR</h4>
+        <div class="metar-grid">
+          <div v-for="m in metars" :key="m.icao" class="metar-card">
+            <div class="metar-header">
+              <span class="badge metar-badge">METAR</span>
+              <span class="metar-icao">{{ m.icao }}</span>
+            </div>
+            <div class="metar-body">
+              <pre v-if="m.metar" class="weather-text">{{ m.metar }}</pre>
+              <p v-else class="no-data">未找到该机场的 METAR 数据</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div v-if="!result && !loading && !error" class="empty-state">
@@ -76,8 +92,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { fetchRoute } from '../api/index.js'
+import { ref, computed } from 'vue'
+import { fetchRoute, fetchMetar } from '../api/index.js'
 import Icon from './Icon.vue'
 
 const dep = ref('')
@@ -87,10 +103,18 @@ const error = ref('')
 const result = ref(null)
 const depInput = ref(null)
 const copied = ref(false)
+const metars = ref([])
+
+const flightPlanUrl = computed(() => {
+  if (!result.value) return 'https://www.flyisfp.com/flight-plan'
+  const raw = `(${result.value.dep}-${result.value.arr}-${result.value.airwayHandIn})`
+  return `https://www.flyisfp.com/flight-plan?activity_plan=${encodeURIComponent(raw)}`
+})
 
 async function search() {
   error.value = ''
   result.value = null
+  metars.value = []
 
   const depCode = dep.value.trim().toUpperCase()
   const arrCode = arr.value.trim().toUpperCase()
@@ -113,11 +137,21 @@ async function search() {
       return
     }
     result.value = data
+    fetchMetars(depCode, arrCode)
   } catch (e) {
     error.value = `查询失败: ${e.message}`
   } finally {
     loading.value = false
   }
+}
+
+async function fetchMetars(depCode, arrCode) {
+  const codes = [depCode, arrCode]
+  const results = await Promise.allSettled(codes.map(code => fetchMetar(code)))
+  metars.value = codes.map((code, i) => ({
+    icao: code,
+    metar: results[i].status === 'fulfilled' ? results[i].value : null
+  }))
 }
 
 function copyAirway(text) {
@@ -227,6 +261,17 @@ function copyAirway(text) {
 }
 .route-code.highlight { color: var(--green); border-color: var(--green-border); background: var(--green-soft); }
 
+.metar-section { padding: 20px 24px; border-top: 1px solid var(--border); }
+.metar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.metar-card { background: var(--glass-input); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.metar-header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--border-light); background: var(--glass-code); }
+.badge { padding: 2px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+.metar-badge { background: var(--accent-grad); }
+.metar-icao { font-size: 14px; color: var(--text-accent); font-weight: 600; font-family: 'Consolas', 'Courier New', monospace; letter-spacing: 2px; }
+.metar-body { padding: 14px 16px; }
+.weather-text { font-size: 13px; line-height: 1.8; color: var(--text); white-space: pre-wrap; word-break: break-all; font-family: 'Consolas', 'Courier New', monospace; background: var(--glass-code); padding: 12px 14px; border-radius: 8px; }
+.no-data { color: var(--text-dim); font-size: 13px; text-align: center; }
+
 .empty-state { text-align: center; padding: 60px 0 40px; color: var(--text-muted); }
 .empty-logo { display: inline-flex; color: var(--text-muted); opacity: 0.35; margin-bottom: 16px; }
 .empty-state p { font-size: 14px; margin-bottom: 6px; }
@@ -236,6 +281,7 @@ function copyAirway(text) {
   .route-visual { flex: 0 0 auto; width: 100%; }
   .result-grid { grid-template-columns: 1fr; }
   .result-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  .metar-grid { grid-template-columns: 1fr; }
   .icao-input { width: 100%; font-size: 24px; letter-spacing: 6px; }
 }
 </style>

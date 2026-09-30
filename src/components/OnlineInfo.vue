@@ -43,6 +43,7 @@
               <span class="pilot-callsign">{{ pilot.callsign }}</span>
               <span class="pilot-name">{{ pilot.real_name }}</span>
             </div>
+            <span :class="pilot.on_ground ? 'tag-ground' : 'tag-air'">{{ pilot.on_ground ? '地面' : '空中' }}</span>
           </div>
 
           <div class="pilot-flight-row">
@@ -280,6 +281,8 @@ fetchStatus()
 .item-detail { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); padding-left: 30px; }
 .item-login { color: var(--text-dim); }
 .tag-break { background: var(--orange-soft); color: var(--orange); padding: 1px 8px; border-radius: 4px; font-size: 11px; }
+.tag-ground { background: var(--orange-soft); color: var(--orange); padding: 1px 8px; border-radius: 4px; font-size: 11px; }
+.tag-air { background: var(--green-soft); color: var(--green); padding: 1px 8px; border-radius: 4px; font-size: 11px; }
 .atc-info { margin-top: 6px; padding-left: 30px; font-size: 12px; color: var(--text-accent); font-family: 'Consolas', 'Courier New', monospace; word-break: break-all; }
 
 .empty-mini { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 14px; }

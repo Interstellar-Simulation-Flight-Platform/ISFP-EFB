@@ -2,7 +2,7 @@ const API_BASE = '/api/isfp'
 const ROUTE_API = '/api/route'
 const AVIATION_API = '/api/aviation'
 
-const AIRAC_CYCLE = '2605'
+const AIRAC_CYCLE = '2609'
 
 async function isfpFetch(url, options = {}) {
   const response = await fetch(url, options)
