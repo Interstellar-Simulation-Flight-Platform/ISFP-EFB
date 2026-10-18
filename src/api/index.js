@@ -2,8 +2,6 @@ const API_BASE = '/api/isfp'
 const ROUTE_API = '/api/route'
 const AVIATION_API = '/api/aviation'
 
-const AIRAC_CYCLE = '2609'
-
 async function isfpFetch(url, options = {}) {
   const response = await fetch(url, options)
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
@@ -28,8 +26,7 @@ export async function fetchRoute(dep, arr) {
   const params = new URLSearchParams({
     dep,
     arr,
-    xt: 'FSINN',
-    b: `AIRAC${AIRAC_CYCLE}`
+    xt: 'FSINN'
   })
   const url = `${ROUTE_API}/api.php?${params.toString()}`
   const text = await isfpFetch(url)

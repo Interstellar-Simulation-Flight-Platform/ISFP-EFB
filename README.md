@@ -35,7 +35,55 @@ npm run dev
 npm run build
 ```
 
-产出在 `dist/` 目录，可直接用任意静态服务器或参考 `nginx.conf` 部署。
+产出在 `dist/` 目录，可直接用任意静态服务器或参考下方 nginx 配置部署。
+
+## 部署（nginx / 宝塔）
+
+`/api/*` 需要反向代理到真实上游。生产 nginx 配置示例：
+
+```nginx
+# ISFP API (METAR / 在线状态)
+location /api/isfp/ {
+    proxy_pass https://isfpapi.flyisfp.com/api/;
+    proxy_set_header Host isfpapi.flyisfp.com;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_ssl_server_name on;
+}
+
+# 航路查询 API
+location /api/route/ {
+    # 前端未携带 AIRAC 周期(b)参数时，自动追加默认周期
+    # 注意：上游缺省 b 参数会返回空航路，必须指定周期
+    if ($arg_b = '') {
+        set $args "${args}&b=AIRAC2610";
+    }
+    proxy_pass https://route.hkrscoc.com/;
+    proxy_set_header Host route.hkrscoc.com;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_ssl_server_name on;
+}
+
+# Aviation Weather API (TAF)
+location /api/aviation/ {
+    proxy_pass https://aviationweather.gov/;
+    proxy_set_header Host aviationweather.gov;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_ssl_server_name on;
+}
+```
+
+**AIRAC 周期维护**：航路数据按 AIRAC 周期更新，换期时需要同步修改两处：
+
+| 环境 | 位置 |
+|------|------|
+| 本地开发 | `vite.config.js` 顶部 `ROUTE_AIRAC_CYCLE` |
+| 生产 | nginx `/api/route/` location 中的 `b=AIRAC2610` |
 
 ## PWA 安装
 
