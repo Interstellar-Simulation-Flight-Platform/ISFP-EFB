@@ -1,6 +1,7 @@
 const API_BASE = '/api/isfp'
 const ROUTE_API = '/api/route'
 const AVIATION_API = '/api/aviation'
+const AIRPORT_DATA_BASE = 'https://data.flyisfp.com/airports/info'
 
 async function isfpFetch(url, options = {}) {
   const response = await fetch(url, options)
@@ -108,19 +109,19 @@ export async function fetchOnlineStatus() {
 }
 
 export async function loadAirportData() {
-  const response = await fetch('/airports.json')
+  const response = await fetch(`${AIRPORT_DATA_BASE}/airports.json`)
   if (!response.ok) throw new Error('机场数据加载失败')
   return response.json()
 }
 
 export async function loadTimezoneTranslations() {
-  const response = await fetch('/timezone_translations.json')
+  const response = await fetch(`${AIRPORT_DATA_BASE}/timezone_translations.json`)
   if (!response.ok) return {}
   return response.json()
 }
 
 export async function loadCountryNames() {
-  const response = await fetch('/country_multilingual.csv')
+  const response = await fetch(`${AIRPORT_DATA_BASE}/country_multilingual.csv`)
   if (!response.ok) return {}
   const text = await response.text()
   const map = {}

@@ -95,9 +95,6 @@ location /api/aviation/ {
 ├── index.html
 ├── vite.config.js
 ├── public/
-│   ├── airports.json              # 机场数据库
-│   ├── country_multilingual.csv   # 国家名称翻译
-│   ├── timezone_translations.json # 时区翻译
 │   ├── manifest.json              # PWA 应用清单
 │   ├── sw.js                      # Service Worker
 │   └── logo/                      # 图标文件
