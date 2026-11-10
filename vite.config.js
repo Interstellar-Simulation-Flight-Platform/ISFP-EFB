@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 // 航路查询 AIRAC 周期号（转发给上游时自动附加 b=AIRAC{周期}）
 // 留空则不附加，由上游使用默认期数
-const ROUTE_AIRAC_CYCLE = '2610'
+const ROUTE_AIRAC_CYCLE = '2611'
 
 export default defineConfig({
   plugins: [vue()],

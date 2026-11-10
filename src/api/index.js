@@ -5,7 +5,11 @@ const AIRPORT_DATA_BASE = 'https://data.flyisfp.com/airports/info'
 
 async function isfpFetch(url, options = {}) {
   const response = await fetch(url, options)
-  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  if (!response.ok) {
+    const err = new Error(`HTTP ${response.status}`)
+    err.status = response.status
+    throw err
+  }
   const text = await response.text()
 
   if (text.startsWith('url0=') || text.startsWith('url=')) {
@@ -67,11 +71,17 @@ function parseRouteFromSpf(content, dep, arr) {
 
 export async function fetchMetar(icao) {
   const url = `${API_BASE}/metar?icao=${icao.toUpperCase()}`
-  const data = await isfpFetch(url)
-  if (data && data.code === 'GET_METAR' && data.data && data.data.length > 0) {
-    return data.data[0]
+  try {
+    const data = await isfpFetch(url)
+    if (data && data.code === 'GET_METAR' && data.data && data.data.length > 0) {
+      return data.data[0]
+    }
+    return null
+  } catch (e) {
+    // 上游无数据时返回404, 视为"未找到"而非请求失败
+    if (e.status === 404) return null
+    throw e
   }
-  return null
 }
 
 export async function fetchTaf(icao) {
