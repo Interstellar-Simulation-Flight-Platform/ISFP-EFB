@@ -33,6 +33,11 @@ export default defineConfig({
         target: 'https://aviationweather.gov',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/aviation/, '')
+      },
+      '/eaip': {
+        target: 'https://eaip.flyisfp.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/eaip/, '')
       }
     }
   }

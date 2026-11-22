@@ -16,8 +16,8 @@
       </div>
       <div class="header-right">
         <UtcClock />
-        <button class="icon-btn" @click="toggleTheme" :title="theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'">
-          <Icon :name="theme === 'dark' ? 'sun' : 'moon'" :size="18" />
+        <button class="icon-btn" @click="toggleTheme" :title="theme === 'dark' ? '切换到跟随系统' : theme === 'light' ? '切换到深色模式' : '切换到浅色模式'">
+          <Icon :name="theme === 'dark' ? 'moon' : theme === 'light' ? 'sun' : 'monitor'" :size="18" />
         </button>
         <a href="https://www.flyisfp.com" target="_blank" rel="noopener noreferrer" class="ghost-link" title="访问ISFP主站">
           <Icon name="globe" :size="16" />
@@ -43,17 +43,6 @@
             <span class="side-label">{{ tab.label }}</span>
             <span v-if="activeTab === tab.id && !sidebarCollapsed" class="side-dot"></span>
           </button>
-          <a
-            href="https://eaip.flyisfp.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="side-btn side-link"
-            title="航图查询"
-          >
-            <span class="side-icon"><Icon name="map" :size="20" /></span>
-            <span class="side-label">航图查询</span>
-            <span class="side-ext"><Icon name="arrowRight" :size="14" /></span>
-          </a>
         </nav>
         <div class="sidebar-foot">
           <button class="toggle-btn" @click="sidebarCollapsed = !sidebarCollapsed" :title="sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
@@ -62,12 +51,13 @@
         </div>
       </aside>
 
-      <main class="main-content">
-        <div class="content-inner">
+      <main :class="['main-content', { 'chart-mode': activeTab === 'chart' }]">
+        <div :class="['content-inner', { 'chart-inner': activeTab === 'chart' }]">
           <RouteQuery v-if="activeTab === 'route'" />
           <MetarTafQuery v-else-if="activeTab === 'weather'" />
           <AirportInfo v-else-if="activeTab === 'airport'" />
           <OnlineInfo v-else-if="activeTab === 'online'" />
+          <ChartQuery v-else-if="activeTab === 'chart'" />
         </div>
       </main>
     </div>
@@ -88,47 +78,45 @@ import RouteQuery from './components/RouteQuery.vue'
 import MetarTafQuery from './components/MetarTafQuery.vue'
 import AirportInfo from './components/AirportInfo.vue'
 import OnlineInfo from './components/OnlineInfo.vue'
+import ChartQuery from './components/ChartQuery.vue'
 import UtcClock from './components/UtcClock.vue'
 import Icon from './components/Icon.vue'
 
 const activeTab = ref('route')
 const sidebarCollapsed = ref(false)
-const theme = ref('dark')
+// 'light' | 'dark' | 'system' 三态循环切换
+const theme = ref('system')
+const THEME_ORDER = ['light', 'dark', 'system']
 let mediaQuery = null
 let mediaHandler = null
 
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t)
+function applyTheme() {
+  const resolved = theme.value === 'system'
+    ? (mediaQuery && mediaQuery.matches ? 'dark' : 'light')
+    : theme.value
+  document.documentElement.setAttribute('data-theme', resolved)
 }
 
 function toggleTheme() {
-  const next = theme.value === 'dark' ? 'light' : 'dark'
+  const next = THEME_ORDER[(THEME_ORDER.indexOf(theme.value) + 1) % THEME_ORDER.length]
   theme.value = next
   localStorage.setItem('efb-theme', next)
-  applyTheme(next)
-}
-
-function followSystem() {
-  theme.value = mediaQuery.matches ? 'dark' : 'light'
-  applyTheme(theme.value)
+  applyTheme()
 }
 
 onMounted(() => {
   const saved = localStorage.getItem('efb-theme')
-  if (saved === 'light' || saved === 'dark') {
+  if (saved === 'light' || saved === 'dark' || saved === 'system') {
     theme.value = saved
-  } else if (window.matchMedia) {
+  }
+  if (window.matchMedia) {
     mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    followSystem()
-    mediaHandler = (e) => {
-      if (!localStorage.getItem('efb-theme')) {
-        theme.value = e.matches ? 'dark' : 'light'
-        applyTheme(theme.value)
-      }
+    mediaHandler = () => {
+      if (theme.value === 'system') applyTheme()
     }
     mediaQuery.addEventListener('change', mediaHandler)
   }
-  applyTheme(theme.value)
+  applyTheme()
 })
 
 onUnmounted(() => {
@@ -137,6 +125,7 @@ onUnmounted(() => {
 
 const tabs = [
   { id: 'route', label: '航路查询', icon: 'route' },
+  { id: 'chart', label: '航图查询', icon: 'map' },
   { id: 'weather', label: '气象报文', icon: 'weather' },
   { id: 'airport', label: '机场信息', icon: 'airport' },
   { id: 'online', label: '在线信息', icon: 'users' },
@@ -189,25 +178,27 @@ function onLogoError(e) {
   --shadow: 0 8px 32px rgba(40, 70, 120, 0.1);
   --shadow-lg: 0 16px 48px rgba(40, 70, 120, 0.15);
   --blur: 18px;
+  --scrollbar-thumb: rgba(150, 170, 200, 0.45);
+  --scrollbar-thumb-hover: rgba(120, 145, 180, 0.7);
 }
 
 [data-theme="dark"] {
-  --bg-base: #070d1c;
-  --bg-grad-1: #122045;
-  --bg-grad-2: #0d1a38;
-  --bg-grad-3: #1a1545;
-  --glass: rgba(22, 36, 66, 0.55);
-  --glass-strong: rgba(26, 42, 76, 0.75);
-  --glass-input: rgba(12, 22, 44, 0.6);
-  --glass-code: rgba(10, 20, 40, 0.6);
-  --glass-sidebar: rgba(14, 24, 48, 0.55);
-  --glass-header: rgba(12, 22, 44, 0.5);
-  --border: rgba(90, 130, 190, 0.28);
-  --border-light: rgba(90, 130, 190, 0.16);
-  --border-strong: rgba(120, 160, 210, 0.45);
-  --text: #e4ecf8;
-  --text-dim: #8ea2c2;
-  --text-muted: #5a6e90;
+  --bg-base: #000000;
+  --bg-grad-1: #141414;
+  --bg-grad-2: #0a0a0a;
+  --bg-grad-3: #191919;
+  --glass: rgba(18, 18, 18, 0.55);
+  --glass-strong: rgba(24, 24, 24, 0.78);
+  --glass-input: rgba(14, 14, 14, 0.6);
+  --glass-code: rgba(12, 12, 12, 0.6);
+  --glass-sidebar: rgba(16, 16, 16, 0.55);
+  --glass-header: rgba(14, 14, 14, 0.5);
+  --border: rgba(255, 255, 255, 0.14);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.24);
+  --text: #e8edf5;
+  --text-dim: #9aa3b2;
+  --text-muted: #5f6773;
   --text-accent: #6fb5ff;
   --accent: #3a90f0;
   --accent-2: #62aefc;
@@ -223,18 +214,32 @@ function onLogoError(e) {
   --red: #ff6b6b;
   --red-bg: rgba(255, 90, 90, 0.12);
   --red-border: rgba(255, 90, 90, 0.32);
-  --hover-bg: rgba(111, 181, 255, 0.08);
+  --hover-bg: rgba(255, 255, 255, 0.07);
   --active-bg: rgba(111, 181, 255, 0.14);
-  --toggle-bg: rgba(111, 181, 255, 0.08);
-  --toggle-hover: rgba(111, 181, 255, 0.18);
-  --divider: rgba(90, 130, 190, 0.2);
+  --toggle-bg: rgba(255, 255, 255, 0.35);
+  --toggle-hover: rgba(255, 255, 255, 0.08);
+  --divider: rgba(255, 255, 255, 0.12);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
   --blur: 20px;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.13);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.24);
 }
+
+/* 深色模式: 纯黑无光晕 */
+[data-theme="dark"] .app-container { background: var(--bg-base); }
+[data-theme="dark"] .bg-decor { display: none; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; }
+
+/* 深浅色统一的滚动条, 轨道透明; 滑块亮度随主题(深色用暗灰不刺眼) */
+html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+::-webkit-scrollbar-corner { background: transparent; }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
@@ -370,6 +375,17 @@ body {
 
 .main-content { flex: 1; padding: 24px 28px; min-width: 0; overflow-y: auto; position: relative; z-index: 1; }
 .content-inner { max-width: 1180px; margin: 0 auto; }
+
+/* 航图页签: 全宽 + 固定视口高度, 阅读器不随页面滚动 */
+.main-content.chart-mode { display: flex; overflow: hidden; }
+.content-inner.chart-inner {
+  max-width: none;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 
 .app-footer {
   position: relative; z-index: 2;

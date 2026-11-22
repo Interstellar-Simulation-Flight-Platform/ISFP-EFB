@@ -22,6 +22,8 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return
   if (url.origin !== location.origin) return
   if (url.pathname.startsWith('/api/')) return
+  // EAIP 航图数据体积大且随周期更新, 交给上游 HTTP 缓存, 不进 SW 存储
+  if (url.pathname.startsWith('/eaip/')) return
 
   if (req.mode === 'navigate') {
     event.respondWith(

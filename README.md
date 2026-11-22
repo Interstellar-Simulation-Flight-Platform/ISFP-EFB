@@ -7,6 +7,7 @@
 | 模块 | 说明 |
 |------|------|
 | 航路查询 | 输入起降机场 ICAO 代码，获取完整航路与提交航路，支持一键复制提交航路 |
+| 航图查询 | 内嵌 eAIP 航图 PDF 阅读器，按章节浏览/搜索机场图、航路图、AIP 文档，数据来自 eaip.flyisfp.com |
 | 气象报文 | METAR 实况报文 + TAF 预报报文查询，TAF 支持批量（逗号分隔） |
 | 机场信息 | 机场名称、城市、国家、标高、经纬度、时区等信息 |
 | 在线信息 | ISFP 连飞平台在线客户端、飞行员、管制员实时状态，每 30 秒自动轮询 |
@@ -76,6 +77,18 @@ location /api/aviation/ {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_ssl_server_name on;
 }
+
+# EAIP 航图数据 (索引 JSON + PDF 文件)
+# 上游无 CORS 头, 必须经同源反代; PDF 单文件可达数百 KB, 建议开启缓存
+location /eaip/ {
+    proxy_pass https://eaip.flyisfp.com/;
+    proxy_set_header Host eaip.flyisfp.com;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_ssl_server_name on;
+    proxy_cache_valid 200 12h;
+}
 ```
 
 **AIRAC 周期维护**：航路数据按 AIRAC 周期更新，换期时需要同步修改两处：
@@ -102,9 +115,11 @@ location /api/aviation/ {
     ├── main.js                    # 入口，注册 Service Worker
     ├── App.vue                    # 布局、侧边栏、主题切换
     ├── api/
-    │   └── index.js               # API 封装
+    │   ├── index.js               # API 封装
+    │   └── eaip.js                # EAIP 航图数据层（周期/索引/PDF 路径解析）
     └── components/
         ├── AirportInfo.vue
+        ├── ChartQuery.vue         # 航图查询（内嵌 PDF 阅读器）
         ├── MetarTafQuery.vue
         ├── OnlineInfo.vue
         ├── RouteQuery.vue
