@@ -767,6 +767,8 @@ onMounted(loadAll)
   padding: 10px 16px;
 }
 .viewer-name {
+  flex: 1;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
@@ -873,9 +875,12 @@ onMounted(loadAll)
 @keyframes chart-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 900px) {
+  /* 移动端页面级滚动: 列表保持内部滚动, 整页在 main-content 里上下滑动 */
+  .chart-query { height: auto; min-height: 100%; }
   .chart-layout { flex-direction: column; }
   .chart-side { width: 100%; flex-shrink: 0; }
-  .chart-list { max-height: 260px; }
-  .viewer-body { min-height: 62vh; }
+  .chart-list { max-height: 240px; flex-shrink: 0; }
+  .chart-viewer { flex: none; }
+  .viewer-body { min-height: 480px; }
 }
 </style>

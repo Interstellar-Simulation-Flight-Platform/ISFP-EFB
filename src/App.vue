@@ -387,6 +387,12 @@ body {
   flex-direction: column;
 }
 
+/* 移动端航图页签恢复页面级滚动(单屏锁死会导致无法下滑) */
+@media (max-width: 900px) {
+  .main-content.chart-mode { display: block; overflow-y: auto; }
+  .content-inner.chart-inner { height: auto; min-height: 100%; }
+}
+
 .app-footer {
   position: relative; z-index: 2;
   background: var(--glass-header);
