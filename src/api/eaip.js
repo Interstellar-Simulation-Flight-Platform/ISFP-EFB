@@ -1,10 +1,7 @@
-// EAIP 航图数据层
-// 数据源: https://eaip.flyisfp.com/Data （经同源 /eaip 代理访问，避免跨域）
-// 目录结构仿 eAIP-Pad: Data/Customers.js 为周期元信息, Data/JsonPath/{章节}.JSON 为文档索引
-// 分类逻辑仿 eAIP-Pad LocalAIRACPackageParser + EAIPChartClassifier:
-//   AD 树按机场归属拆分 → 机场航图(chart)/机场AIP文字页(ad)/普通AIP文档(aip)
-//   ENR 树按 "EN-ROUTE CHARTS" 子树拆分 → 航路图(enroute)/AIP文档(aip)
-//   机场航图按名称细分: 机场图/离场/进场/进近/其他; 航路图细分: 区域图/航路图/其他
+// EAIP 航图数据层。数据源: https://eaip.flyisfp.com/Data (经同源 /eaip 代理, 避免跨域)
+// 目录/分类仿 eAIP-Pad: Data/Customers.js 为周期元信息, Data/JsonPath/{章节}.JSON 为文档索引;
+// AD 树按机场归属拆为 机场航图/机场AIP文字页/普通AIP文档, ENR 树按 "EN-ROUTE CHARTS" 子树拆出航路图,
+// 航图按名称细分类型: 机场图/离场/进场/进近/其他; 航路图细分: 区域图/航路图/其他
 
 const EAIP_BASE = '/eaip'
 
@@ -77,8 +74,7 @@ async function fetchText(url) {
   return response.text()
 }
 
-// Customers.js 内容形如: var Customers=[{ IataCode:"", DataName:"2026-11", ...}]
-// 键名未加引号, 不是合法 JSON(eAIP-Pad 为此手写了专用解析器); 补引号修复后再 parse
+// Customers.js 的键名未加引号(非合法 JSON, eAIP-Pad 为此手写了专用解析器); 补引号修复后再 parse
 function parseCustomers(text) {
   const raw = text.replace(/^\s*var\s+Customers\s*=\s*/, '').trim().replace(/;\s*$/, '')
   const json = raw.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":')
@@ -89,7 +85,6 @@ function parseCustomers(text) {
   return list[0]
 }
 
-// 周期元信息
 export async function fetchEaipVersion() {
   const text = await fetchText(`${EAIP_BASE}/Data/Customers.js`)
   const customer = parseCustomers(text)
@@ -165,7 +160,6 @@ export function resolveEaipUrl(pdfPath) {
   return `${EAIP_BASE}/${segments.map(encodeURIComponent).join('/')}`
 }
 
-// 展平树为文档列表(仅含 pdfPath 的节点)
 function flattenNodes(tree) {
   const out = []
   const walk = (nodes) => {
@@ -178,7 +172,6 @@ function flattenNodes(tree) {
   return out
 }
 
-// 去掉 "ZBAA-" 前缀取机场名，照抄 eAIP-Pad stripIcaoPrefix
 function stripIcaoPrefix(name, icao) {
   return (name || '').startsWith(`${icao}-`) ? name.slice(icao.length + 1) : (name || '')
 }
@@ -187,7 +180,6 @@ const CHART_BRANCH_PATTERNS = ['机场航图', '机场有关的航图', '机场�
 
 // 仿 eAIP-Pad parseAD: 沿 AD 目录树传递所属机场与航图分组
 // 文字页节点(AD 2.1/2.2...)全部指向机场细则整章 PDF, 按文件去重后每个机场只保留一份完整文件条目
-// 返回 { tree, airports, charts, adFiles, aipDocs }
 export function parseAdSection(nodes) {
   const tree = buildSectionTree(nodes)
   const byId = new Map(nodes.map((n) => [n.id, n]))

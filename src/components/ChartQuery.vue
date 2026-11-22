@@ -25,7 +25,6 @@
           <button :class="['chart-tab', { active: mode === 'docs' }]" @click="switchMode('docs')">AIP 文档</button>
         </div>
 
-        <!-- 机场图模式 -->
         <template v-if="mode === 'airport'">
           <div v-if="!selectedAirport" class="chart-search">
             <input v-model="airportSearch" type="text" class="chart-search-input"
@@ -42,7 +41,6 @@
           </div>
 
           <div class="chart-list">
-            <!-- 机场列表 -->
             <template v-if="!selectedAirport">
               <p v-if="filteredAirports.length === 0" class="chart-empty">没有匹配的机场</p>
               <button v-for="ap in filteredAirports" :key="ap.icao" class="chart-row"
@@ -54,7 +52,6 @@
                 <span class="row-icao">{{ ap.icao }}</span>
               </button>
             </template>
-            <!-- 选中机场: 顶部机场资料 + 按类型分组的航图 -->
             <template v-else>
               <button v-if="airportAdFile" class="chart-row"
                       :class="{ selected: currentDoc && currentDoc.id === airportAdFile.id }"
@@ -76,7 +73,6 @@
           </div>
         </template>
 
-        <!-- 航路图模式 -->
         <template v-else-if="mode === 'enroute'">
           <div class="chart-search">
             <input v-model="docSearch" type="text" class="chart-search-input" placeholder="搜索航路图" />
@@ -95,7 +91,6 @@
           </div>
         </template>
 
-        <!-- AIP 文档模式 -->
         <template v-else>
           <div class="chart-tabs sub-tabs">
             <button v-for="sec in docSections" :key="sec"
@@ -107,7 +102,6 @@
                    :placeholder="`搜索${secLabel(docSection)}文档`" />
           </div>
           <div class="chart-list">
-            <!-- 树形章节 (GEN/ENR/AD) -->
             <template v-if="isTreeSection">
               <template v-if="docSearch.trim()">
                 <p v-if="filteredDocResults.length === 0" class="chart-empty">没有匹配的文档</p>
@@ -131,7 +125,6 @@
                 </button>
               </template>
             </template>
-            <!-- 平铺列表 (SUP/AIC/AMDT/NOTAM) -->
             <template v-else>
               <p v-if="flatDocs.length === 0" class="chart-empty">本章节没有文档</p>
               <button v-for="doc in filteredFlatDocs" :key="doc.id" class="chart-row"
@@ -207,18 +200,15 @@ const error = ref('')
 const versionInfo = ref(null)
 const mode = ref('airport') // 'airport' | 'enroute' | 'docs'
 
-// 解析结果
 const airports = ref([])
-const adData = ref(null) // { tree, charts, adDocs, aipDocs }
+const adData = ref(null) // { tree, charts, adFiles, aipDocs }
 const enrData = ref(null) // { tree, enrouteCharts, aipDocs }
 const genTree = ref([])
 const docFlat = reactive({ SUP: [], AIC: [], AMDT: [], NOTAM: [] })
 
-// 机场图模式
 const selectedAirport = ref(null)
 const airportSearch = ref('')
 
-// 航路图 / 文档模式
 const docSearch = ref('')
 const docSection = ref('GEN')
 const expanded = reactive(new Set())
@@ -226,19 +216,15 @@ const currentDoc = ref(null)
 const pdfLoading = ref(false)
 const pdfError = ref('')
 
-// PDF 下载管理: fetch → blob URL, 加载状态绑定 fetch 生命周期,
-// 不依赖 iframe load 事件(内置 PDF 查看器被快速重建中断时该事件不触发)
-// 每次选择条目都生成新的 blob URL 强制 iframe 重载 → 滚动回顶、缩放统一为默认,
-// 避免"同文件章节切换继承上次缩放/滚动"与"不同文件切换重置默认"两种行为交替
+// PDF 加载: fetch → blob URL, 加载状态绑定 fetch 生命周期(内置 PDF 查看器被快速中断时 iframe load 事件不触发)
+// Chrome viewer 把缩放/滚动保留在 tab 级(跨 iframe 重建甚至页面刷新), 因此每次选择条目都生成
+// 新的 blob URL 强制重载 → 滚动回顶、缩放统一为默认; blob 按 url 做 LRU 缓存避免来回切换重复下载
 let loadController = null
-// 已下载 PDF 的 blob 缓存(url → blob), LRU 上限 8 份:
-// 来回切换文档零重复下载, 同文件其他章节条目也直接命中
 const BLOB_CACHE_MAX = 8
 const blobCache = new Map()
 let blobUrl = null
 
-// Chrome 内置 PDF viewer 会把缩放/滚动状态保留在 tab 级别(跨 iframe 重建甚至页面刷新),
-// 通过 URL fragment 强制每次打开都回到第一页并按宽度适配, 覆盖被继承的状态
+// PDF viewer 的 URL fragment 参数: 每次打开都定位第一页并按宽度适配
 const PDF_VIEW_FRAGMENT = '#page=1&zoom=page-width'
 
 function cacheBlob(url, blob) {
@@ -391,7 +377,6 @@ const docSections = computed(() => {
 
 const isTreeSection = computed(() => TREE_SECTIONS.includes(docSection.value))
 
-// 当前文档章节的树
 const currentDocTree = computed(() => {
   if (docSection.value === 'GEN') return genTree.value
   if (docSection.value === 'ENR') return enrData.value ? enrData.value.tree : []
@@ -414,7 +399,6 @@ const visibleRows = computed(() => {
   return rows
 })
 
-// 文档树展平结果(搜索时显示)
 const treeFlatDocs = computed(() => {
   const out = []
   const walk = (nodes) => {
