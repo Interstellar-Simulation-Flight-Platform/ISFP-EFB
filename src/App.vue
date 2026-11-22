@@ -411,18 +411,36 @@ body {
 }
 
 @media (max-width: 600px) {
-  .app-header { height: auto; padding: 8px 12px; gap: 8px; }
-  .header-left h1 { font-size: 14px; }
+  /* 顶部栏: 单行紧凑布局 */
+  .app-header { height: 52px; padding: 0 10px; gap: 8px; }
+  .header-left { gap: 8px; flex-shrink: 0; }
+  .header-left h1 { font-size: 13px; white-space: nowrap; }
+  .title-group { min-width: 0; }
   .title-sub { display: none; }
+  .logo-img { width: 26px; height: 26px; }
+  .header-right { gap: 6px; flex-shrink: 0; }
+  /* 主站链接只留图标 */
+  .ghost-link { padding: 7px; }
+  .ghost-link span { display: none; }
+
   .app-body { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; padding: 0; border-right: none; border-bottom: 1px solid var(--border); }
+  /* 侧边栏变顶部导航条: 图标+文字, 可横向滚动 */
+  .sidebar { width: 100%; flex-direction: row; padding: 0; border-right: none; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .sidebar.collapsed { width: 100%; }
   .sidebar-head { display: none; }
-  .sidebar-foot { display: flex; border-top: none; margin: 0; padding: 0 8px; align-items: center; }
-  .side-nav { flex-direction: row; padding: 4px 8px; overflow-x: auto; }
-  .side-btn { white-space: nowrap; width: auto; padding: 8px 12px; font-size: 12px; }
-  .side-label { opacity: 1 !important; }
+  /* 折叠按钮在移动端无意义, 隐藏 */
+  .sidebar-foot { display: none; }
+  .side-nav { flex-direction: row; padding: 4px 6px; overflow-x: auto; scrollbar-width: none; gap: 4px; }
+  .side-nav::-webkit-scrollbar { display: none; }
+  /* 移动端纵向排列(图标上/文字下), 背景框方正且四周留白均匀 */
+  .side-btn { flex-direction: column; white-space: nowrap; width: auto; flex: 1; padding: 8px 4px; font-size: 12px; gap: 3px; align-items: center; }
+  /* 覆盖 768 断点的 display:none, 显示文字标签 */
+  .sidebar .side-label { display: inline; opacity: 1; font-size: 10.5px; }
+  .side-icon svg { width: 18px; height: 18px; }
   .side-btn::before { display: none; }
-  .app-footer { font-size: 10px; gap: 6px; }
+  .side-dot { display: none; }
+
+  .main-content { padding: 12px; }
+  .app-footer { font-size: 10px; gap: 6px; padding: 6px 12px; }
 }
 </style>

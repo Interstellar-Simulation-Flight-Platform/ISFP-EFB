@@ -163,4 +163,14 @@ onUnmounted(() => {
   .bottom-num { top: -15px; }
   .flip-sep { line-height: 30px; font-size: 14px; }
 }
+
+/* 手机 header 单行空间有限, 时钟再缩一档 */
+@media (max-width: 480px) {
+  .utc-clock { padding: 3px 6px; gap: 1px; }
+  .flip-box { width: 13px; height: 20px; border-radius: 3px; }
+  .flip-num { height: 20px; line-height: 20px; font-size: 12px; }
+  .bottom-num { top: -10px; }
+  .flip-sep { line-height: 20px; font-size: 11px; width: 6px; }
+  .utc-label { font-size: 8px; margin-left: 4px; letter-spacing: 1px; }
+}
 </style>
